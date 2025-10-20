@@ -7,10 +7,9 @@ replicaCount: 2
 # Image configuration
 image:
   repository: smithveunsa/react-bun-k8s
-  tag: develop
-  pullPolicy: Always
-  pullSecrets:
-    - name: dockerhub-creds
+  tag: frontend
+  pullPolicy: IfNotPresent
+  pullSecrets: []
   # Override for different environments
   # registry: docker.io
   # name: react-bun-k8s

@@ -2,6 +2,11 @@
 .DS_Store
 .env
 .envrc
+.env.local
+.env.production
+.env.staging
+*.env
+backend/.env
 .eslintcache
 .gdb_history
 .idea
@@ -192,3 +197,6 @@ scripts/lldb-inline
 
 # We regenerate these in all the build scripts
 cmake/sources/*.txt
+
+# Python virtual environment
+**/.venv

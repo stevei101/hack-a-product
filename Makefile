@@ -1,18 +1,18 @@
-# Makefile for React + Bun + Kubernetes project
+# Makefile for The Product Mindset - Agentic Application
 # Provides convenient commands for development, building, and deployment
 
 .PHONY: help dev build test clean container-build container-run container-push deploy check-prerequisites
 
 # Default target
 help: ## Show this help message
-	@echo "React + Bun + Kubernetes Project"
-	@echo "================================="
+	@echo "The Product Mindset - Agentic Application"
+	@echo "=========================================="
 	@echo ""
 	@echo "Available commands:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-# Development commands
-dev: ## Start development server
+# Frontend Development commands
+dev: ## Start frontend development server
 	bun run dev
 
 build: ## Build the React application
@@ -24,26 +24,109 @@ preview: ## Preview the built application
 test: ## Run tests (placeholder - add your test command here)
 	@echo "No tests configured yet. Add your test command to package.json"
 
+# Backend Development commands
+backend-dev: ## Start backend development server
+	cd backend && source .venv/bin/activate && python3 test_server.py
+
+backend-setup: ## Set up backend environment
+	@if [ ! -d "backend/.venv" ]; then \
+		cd backend && python3 -m venv .venv; \
+	fi
+	cd backend && source .venv/bin/activate && pip install uv && uv pip install fastapi uvicorn sqlalchemy asyncpg httpx pydantic pydantic-settings numpy
+
+backend-env: ## Create secure environment variables file
+	./setup_env.sh
+
+backend-test: ## Test backend endpoints
+	@echo "Testing backend endpoints..."
+	@curl -s http://localhost:8000/health | head -5
+	@curl -s http://localhost:8000/api/v1/nim/health | head -5
+
+backend-logs: ## View backend logs
+	@echo "Backend logs (if running):"
+	@ps aux | grep test_server | grep -v grep
+
+# Security commands
+security-scan: ## Run security vulnerability scan
+	./security_scan.sh
+
+security-report: ## Generate security report
+	@echo "🔍 Security Report Generated"
+	@echo "📄 Check SECURITY_REPORT.md for detailed findings"
+	@echo "🔧 Check SECURITY_FIXES.md for implementation guide"
+
+security-setup: ## Set up secure environment and run security scan
+	@echo "🔐 Setting up secure environment..."
+	./setup_env.sh
+	@echo "🔍 Running security scan..."
+	./security_scan.sh
+
 clean: ## Clean build artifacts
 	rm -rf dist/
 	rm -rf node_modules/
 
 # Container commands (auto-detects Docker/Podman)
-container-build: ## Build container image (auto-detects Docker/Podman)
-	./scripts/build.sh
+container-build: ## Build container images for both frontend and backend
+	@echo "Building frontend container..."
+	docker build -t smithveunsa/react-bun-k8s:frontend .
+	@echo "Building backend container..."
+	docker build -t smithveunsa/react-bun-k8s:backend ./backend
 
-container-run: ## Run container locally
-	@if command -v podman &> /dev/null; then \
-		podman run -p 8080:80 react-bun-k8s; \
-	elif command -v docker &> /dev/null; then \
-		docker run -p 8080:80 react-bun-k8s; \
-	else \
-		echo "❌ No container runtime found. Install Docker or Podman."; \
+container-build-registry: ## Build and tag for registry (usage: make container-build-registry REGISTRY=ghcr.io/username)
+	@if [ -z "$(REGISTRY)" ]; then \
+		echo "❌ Please specify REGISTRY (e.g., make container-build-registry REGISTRY=ghcr.io/username)"; \
 		exit 1; \
 	fi
+	@echo "Building and tagging for registry: $(REGISTRY)"
+	docker build -t $(REGISTRY):frontend .
+	docker build -t $(REGISTRY):backend ./backend
 
-container-push: ## Push container to registry (usage: make container-push REGISTRY=docker.io/username)
-	./scripts/push.sh $(REGISTRY)
+container-run: ## Run containers locally
+	@echo "Starting backend container..."
+	docker run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
+	@echo "Starting frontend container..."
+	docker run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
+	@echo "✅ Containers started! Backend: http://localhost:8000, Frontend: http://localhost:3000"
+
+container-stop: ## Stop running containers
+	docker stop backend frontend || true
+	docker rm backend frontend || true
+
+container-push: ## Push containers to registry (usage: make container-push REGISTRY=ghcr.io/username)
+	@if [ -z "$(REGISTRY)" ]; then \
+		echo "❌ Please specify REGISTRY (e.g., make container-push REGISTRY=ghcr.io/username)"; \
+		exit 1; \
+	fi
+	@echo "Pushing to registry: $(REGISTRY)"
+	docker push $(REGISTRY):frontend
+	docker push $(REGISTRY):backend
+
+# Docker Hub specific commands (current setup)
+dockerhub-build: ## Build for Docker Hub (smithveunsa/react-bun-k8s)
+	docker build -t smithveunsa/react-bun-k8s:frontend .
+	docker build -t smithveunsa/react-bun-k8s:backend ./backend
+
+dockerhub-push: ## Push to Docker Hub (smithveunsa/react-bun-k8s)
+	docker push smithveunsa/react-bun-k8s:frontend
+	docker push smithveunsa/react-bun-k8s:backend
+
+# GHCR specific commands (future migration)
+ghcr-build: ## Build for GHCR (usage: make ghcr-build USERNAME=your-username)
+	@if [ -z "$(USERNAME)" ]; then \
+		echo "❌ Please specify USERNAME (e.g., make ghcr-build USERNAME=your-username)"; \
+		exit 1; \
+	fi
+	docker build -t ghcr.io/$(USERNAME)/product-mindset:frontend .
+	docker build -t ghcr.io/$(USERNAME)/product-mindset:backend ./backend
+
+ghcr-push: ## Push to GHCR (usage: make ghcr-push USERNAME=your-username)
+	@if [ -z "$(USERNAME)" ]; then \
+		echo "❌ Please specify USERNAME (e.g., make ghcr-push USERNAME=your-username)"; \
+		exit 1; \
+	fi
+	docker push ghcr.io/$(USERNAME)/product-mindset:frontend
+	docker push ghcr.io/$(USERNAME)/product-mindset:backend
+
 
 # Kubernetes deployment commands
 deploy: ## Deploy to Kubernetes using Helm
@@ -128,6 +211,36 @@ deploy-staging: ## Deploy to staging environment
 
 deploy-production: ## Deploy to production environment
 	./scripts/deploy.sh production latest
+
+# Quick start commands
+quick-start: backend-env backend-setup ## Quick start for testing
+	@echo "🚀 Setting up The Product Mindset for testing..."
+	@echo "✅ Backend environment ready!"
+	@echo "📝 Next steps:"
+	@echo "  1. Edit backend/.env and set your NVIDIA API key"
+	@echo "  2. Run 'make backend-dev' to start the backend"
+	@echo "  3. Run 'make dev' to start the frontend"
+	@echo "  4. Visit http://localhost:3000 for the UI"
+	@echo "  5. Visit http://localhost:8000/docs for API docs"
+
+full-start: backend-env backend-setup install ## Complete setup for development
+	@echo "🚀 Setting up The Product Mindset for full development..."
+	@echo "✅ Frontend and backend environments ready!"
+	@echo "📝 Next steps:"
+	@echo "  1. Edit backend/.env and set your NVIDIA API key"
+	@echo "  2. Run 'make backend-dev' to start the backend"
+	@echo "  3. Run 'make dev' to start the frontend"
+	@echo "  4. Visit http://localhost:3000 for the UI"
+	@echo "  5. Visit http://localhost:8000/docs for API docs"
+
+secure-start: security-setup backend-setup install ## Complete secure setup with security scan
+	@echo "🔐 Setting up The Product Mindset with security best practices..."
+	@echo "✅ Secure environment ready!"
+	@echo "📝 Next steps:"
+	@echo "  1. Edit backend/.env and set your NVIDIA API key"
+	@echo "  2. Run 'make backend-dev' to start the backend"
+	@echo "  3. Run 'make dev' to start the frontend"
+	@echo "  4. Review security report in SECURITY_REPORT.md"
 
 # Complete setup commands
 full-setup: check-prerequisites install k8s-setup ## Complete setup including Kubernetes
