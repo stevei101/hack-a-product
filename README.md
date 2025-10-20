@@ -187,6 +187,19 @@ To deploy the application to a Kubernetes cluster, you will need access to a con
 
     If your repository is private, make sure you have created an `imagePullSecrets` in the `web` namespace and configured it in the `values.yaml` file.
 
+4.  **Prerequisite: cert-manager for HTTPS**
+    This chart is configured to use `cert-manager` to automatically provision and renew TLS certificates for HTTPS. If you don't have `cert-manager` installed in your cluster, you can install it with Helm:
+
+    ```bash
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    helm install cert-manager jetstack/cert-manager \
+      --namespace cert-manager \
+      --create-namespace \
+      --version v1.14.5 \
+      --set installCRDs=true
+    ```
+
 ## 🛠️ Makefile Commands
 
 This project includes a comprehensive `Makefile` with convenient shortcuts for all tasks.
