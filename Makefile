@@ -42,6 +42,33 @@ backend-test: ## Test backend endpoints
 	@curl -s http://localhost:8000/health | head -5
 	@curl -s http://localhost:8000/api/v1/nim/health | head -5
 
+# E2E Testing commands
+e2e-test: ## Run all E2E tests
+	@echo "🧪 Running E2E tests..."
+	cd tests/e2e && python3 run_all_tests.py
+
+e2e-test-api-keys: ## Run API key E2E tests
+	@echo "🔑 Running API key E2E tests..."
+	cd tests/e2e && python3 test_api_keys.py
+
+e2e-test-agents: ## Run agent E2E tests
+	@echo "🤖 Running agent E2E tests..."
+	cd tests/e2e && python3 test_agents.py
+
+e2e-test-nim: ## Run NVIDIA NIM E2E tests
+	@echo "🚀 Running NVIDIA NIM E2E tests..."
+	cd tests/e2e && python3 test_nim_integration.py
+
+e2e-setup: ## Set up E2E test environment
+	@echo "🔧 Setting up E2E test environment..."
+	@echo "📝 Creating test API keys..."
+	@echo "ℹ️  Make sure your backend is running with 'make backend-dev'"
+	@echo "ℹ️  Set your NVIDIA API key in backend/.env for NIM tests"
+	@echo "✅ E2E test environment ready!"
+
+e2e-full: backend-dev e2e-test ## Run full E2E test suite with backend
+	@echo "🎉 Full E2E test suite completed!"
+
 backend-logs: ## View backend logs
 	@echo "Backend logs (if running):"
 	@ps aux | grep test_server | grep -v grep
