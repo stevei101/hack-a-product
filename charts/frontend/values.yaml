@@ -29,19 +29,18 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    # nginx.ingress.kubernetes.io/rewrite-target: /
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Use cert-manager to automatically issue a TLS certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
     - host: myapp.example.com
       paths:
         - path: /
           pathType: Prefix
-  tls: []
-  # Optional TLS configuration
-  # tls:
-  #   - secretName: myapp-tls
-  #     hosts:
-  #       - myapp.example.com
+  # Enable TLS for HTTPS
+  tls:
+    - secretName: myapp-tls
+      hosts:
+        - myapp.example.com
 
 # Resource limits and requests
 resources:
