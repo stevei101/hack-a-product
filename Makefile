@@ -101,70 +101,6 @@ container-push: ## Push containers to registry (usage: make container-push REGIS
 	docker push $(REGISTRY):frontend
 	docker push $(REGISTRY):backend
 
-# Docker Hub specific commands (current setup)
-dockerhub-build: ## Build for Docker Hub (smithveunsa/react-bun-k8s)
-	docker build -t smithveunsa/react-bun-k8s:frontend .
-	docker build -t smithveunsa/react-bun-k8s:backend ./backend
-
-dockerhub-push: ## Push to Docker Hub (smithveunsa/react-bun-k8s)
-	docker push smithveunsa/react-bun-k8s:frontend
-	docker push smithveunsa/react-bun-k8s:backend
-
-# GHCR specific commands (future migration)
-ghcr-build: ## Build for GHCR (usage: make ghcr-build USERNAME=your-username)
-	@if [ -z "$(USERNAME)" ]; then \
-		echo "❌ Please specify USERNAME (e.g., make ghcr-build USERNAME=your-username)"; \
-		exit 1; \
-	fi
-	docker build -t ghcr.io/$(USERNAME)/product-mindset:frontend .
-	docker build -t ghcr.io/$(USERNAME)/product-mindset:backend ./backend
-
-ghcr-push: ## Push to GHCR (usage: make ghcr-push USERNAME=your-username)
-	@if [ -z "$(USERNAME)" ]; then \
-		echo "❌ Please specify USERNAME (e.g., make ghcr-push USERNAME=your-username)"; \
-		exit 1; \
-	fi
-	docker push ghcr.io/$(USERNAME)/product-mindset:frontend
-	docker push ghcr.io/$(USERNAME)/product-mindset:backend
-
-
-# Kubernetes deployment commands
-deploy: ## Deploy to Kubernetes using Helm
-	./scripts/deploy.sh
-
-deploy-dev: ## Deploy development version
-	./scripts/deploy.sh web dev
-
-deploy-prod: ## Deploy production version
-	./scripts/deploy.sh web latest
-
-# Utility commands
-check-prerequisites: ## Check if all required tools are installed
-	./scripts/check-prerequisites.sh
-
-install: ## Install dependencies
-	bun install
-
-# Docker-specific commands (if you prefer explicit Docker usage)
-docker-build: ## Build with Docker explicitly
-	docker build -t react-bun-k8s .
-
-docker-run: ## Run with Docker explicitly
-	docker run -p 8080:80 react-bun-k8s
-
-docker-push: ## Push with Docker explicitly
-	docker push react-bun-k8s
-
-# Podman-specific commands (if you prefer explicit Podman usage)
-podman-build: ## Build with Podman explicitly
-	podman build --format=docker -t react-bun-k8s .
-
-podman-run: ## Run with Podman explicitly
-	podman run -p 8080:80 react-bun-k8s
-
-podman-push: ## Push with Podman explicitly (usage: make podman-push IMAGE=your/image:tag)
-	podman push $(IMAGE)
-
 # Helm commands
 helm-install: ## Install Helm chart
 	helm install frontend ./charts/frontend --namespace web --create-namespace
@@ -175,32 +111,9 @@ helm-upgrade: ## Upgrade Helm chart
 helm-uninstall: ## Uninstall Helm chart
 	helm uninstall frontend --namespace web
 
-# Full workflow commands
-# Kubernetes setup commands
-k8s-setup: ## Set up local Kubernetes cluster
-	./scripts/setup-k8s.sh
-
-k8s-kind: ## Create Kind cluster
-	kind create cluster --name react-app
-	kubectl cluster-info --context kind-react-app
-
-k8s-minikube: ## Start Minikube with Podman
-	minikube start --driver=podman
-	kubectl get nodes
-
-k8s-stop: ## Stop Kubernetes cluster
-	@if command -v kind &> /dev/null; then \
-		kind delete cluster --name react-app; \
-	elif command -v minikube &> /dev/null; then \
-		minikube stop; \
-	else \
-		echo "No Kubernetes cluster found to stop"; \
-	fi
-
-k8s-status: ## Check Kubernetes cluster status
-	kubectl cluster-info
-	kubectl get nodes
-	kubectl get pods --all-namespaces
+# Kubernetes management
+k8s: ## Manage local Kubernetes cluster (usage: make k8s command)
+	./scripts/k8s-manage.sh $(filter-out $@,$(MAKECMDGOALS))
 
 # Full workflow commands
 deploy-local: ## Deploy to local Kubernetes (minikube/kind)
