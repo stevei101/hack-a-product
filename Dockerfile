@@ -1,5 +1,5 @@
 # Stage 1: Build with Bun
-FROM oven/bun:1 AS build
+FROM oven/bun:latest AS build
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 RUN bun run build
 
 # Stage 2: Serve static files with NGINX
-FROM nginx:alpine
+FROM nginx:1.27-alpine-slim
 
 # Copy built files from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
