@@ -33,10 +33,20 @@ jobs:
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
+      env:
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Validate
       run: terraform validate
       working-directory: ./terraform
+      env:
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Plan
       run: terraform plan
@@ -45,6 +55,7 @@ jobs:
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
 
   # Build and test the application
   build-and-test:
