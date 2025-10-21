@@ -49,3 +49,14 @@ Selector labels
 app.kubernetes.io/name: {{ include "agentic-backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "agentic-backend.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "agentic-backend.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
