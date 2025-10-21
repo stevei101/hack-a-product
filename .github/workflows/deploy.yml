@@ -46,7 +46,6 @@ jobs:
       run: terraform init
       working-directory: ./terraform
       env:
-        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
@@ -57,7 +56,6 @@ jobs:
       run: terraform validate
       working-directory: ./terraform
       env:
-        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
@@ -65,10 +63,9 @@ jobs:
         TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Plan
-      run: terraform plan -out=tfplan
+      run: terraform plan -input=false
       working-directory: ./terraform
       env:
-        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
@@ -76,10 +73,9 @@ jobs:
         TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve -input=false
       working-directory: ./terraform
       env:
-        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}

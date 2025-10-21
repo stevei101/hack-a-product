@@ -6,7 +6,7 @@ terraform {
     organization = "disposable-org"
 
     workspaces {
-      tags = ["product-mindset"]
+      name = "hack-a-product"
     }
   }
 
