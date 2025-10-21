@@ -84,12 +84,11 @@ jobs:
         pip install uv
         uv pip install fastapi uvicorn sqlalchemy asyncpg httpx pydantic pydantic-settings numpy pytest
         
-    - name: Run backend tests
-      run: |
-        cd backend
-        source .venv/bin/activate
-        python -m pytest tests/ -v
-      env:
+          - name: Run backend tests
+          run: |
+            cd backend
+            source .venv/bin/activate
+            python -m pytest -v      env:
         NIM_API_KEY: ${{ secrets.NIM_API_KEY }}
 
   # Deploy to AWS EKS
