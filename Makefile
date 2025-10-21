@@ -101,6 +101,28 @@ container-push: ## Push containers to registry (usage: make container-push REGIS
 	docker push $(REGISTRY):frontend
 	docker push $(REGISTRY):backend
 
+# GitHub Actions Deployment commands
+github-secrets: ## Show required GitHub repository secrets
+	@echo "🔐 Required GitHub Repository Secrets:"
+	@echo "  AWS_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT:role/product-mindset-github-actions-dev"
+	@echo "  AWS_REGION=us-west-2"
+	@echo "  NIM_API_KEY=your_nvidia_api_key"
+	@echo "  POSTGRES_PASSWORD=your_secure_password"
+	@echo ""
+	@echo "📝 Add these secrets in GitHub: Settings → Secrets and variables → Actions"
+
+github-deploy: ## Trigger GitHub Actions deployment
+	@echo "🚀 Triggering GitHub Actions deployment..."
+	@echo "📝 Push to 'main' or 'develop' branch to trigger deployment"
+	@echo "🔗 Check Actions tab in your GitHub repository"
+
+# Terraform Cloud commands (for infrastructure management)
+terraform-validate: ## Validate Terraform configuration locally
+	cd terraform && terraform validate
+
+terraform-format: ## Format Terraform files
+	cd terraform && terraform fmt -recursive
+
 # Helm commands
 helm-install: ## Install Helm chart
 	helm install frontend ./charts/frontend --namespace web --create-namespace
