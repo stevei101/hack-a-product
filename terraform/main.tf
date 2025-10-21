@@ -57,7 +57,7 @@ resource "aws_s3_bucket_website_configuration" "site_config" {
 # ECR Repositories
 resource "aws_ecr_repository" "frontend" {
   name                 = "smithveunsa/react-bun-k8s-frontend"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -71,7 +71,7 @@ resource "aws_ecr_repository" "frontend" {
 
 resource "aws_ecr_repository" "backend" {
   name                 = "smithveunsa/react-bun-k8s-backend"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
