@@ -105,7 +105,7 @@ container-push: ## Push containers to registry (usage: make container-push REGIS
 github-secrets: ## Show required GitHub repository secrets
 	@echo "🔐 Required GitHub Repository Secrets:"
 	@echo "  AWS_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT:role/product-mindset-github-actions-dev"
-	@echo "  AWS_REGION=us-west-2"
+	@echo "  AWS_REGION=us-east-1"
 	@echo "  NIM_API_KEY=your_nvidia_api_key"
 	@echo "  POSTGRES_PASSWORD=your_secure_password"
 	@echo ""
@@ -124,6 +124,14 @@ github-test-auth: ## Test GitHub Actions AWS authentication
 	@echo "🧪 Testing GitHub Actions AWS authentication..."
 	@echo "📝 Push to 'develop' branch to trigger AWS auth test"
 	@echo "🔗 Check Actions tab for 'Test AWS Authentication' workflow"
+
+github-verify: ## Verify GitHub repository configuration
+	@echo "🔍 Verifying GitHub repository setup..."
+	./scripts/verify-github-setup.sh
+
+github-config: ## Check GitHub configuration checklist
+	@echo "📋 GitHub configuration checklist..."
+	./scripts/check-github-config.sh
 
 # Terraform Cloud commands (for infrastructure management)
 terraform-validate: ## Validate Terraform configuration locally
