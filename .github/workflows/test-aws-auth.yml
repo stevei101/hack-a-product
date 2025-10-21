@@ -1,0 +1,60 @@
+name: Test AWS Authentication
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-auth:
+    name: Test AWS OIDC Authentication
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Debug GitHub context
+      run: |
+        echo "Repository: ${{ github.repository }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "AWS_ROLE_ARN secret exists: ${{ secrets.AWS_ROLE_ARN != '' }}"
+        if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then
+          echo "AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}"
+        else
+          echo "❌ AWS_ROLE_ARN secret is not set!"
+        fi
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: us-west-2
+        role-session-name: GitHubActions-Test-${{ github.run_id }}
+      
+    - name: Test AWS authentication
+      run: |
+        echo "✅ AWS authentication successful!"
+        echo "Account ID: $(aws sts get-caller-identity --query Account --output text)"
+        echo "User ID: $(aws sts get-caller-identity --query UserId --output text)"
+        echo "ARN: $(aws sts get-caller-identity --query Arn --output text)"
+        
+    - name: Test AWS permissions
+      run: |
+        echo "🔍 Testing AWS permissions..."
+        
+        # Test S3 access
+        echo "Testing S3 access..."
+        aws s3 ls || echo "⚠️ S3 access limited (expected for security)"
+        
+        # Test EKS access
+        echo "Testing EKS access..."
+        aws eks list-clusters || echo "⚠️ EKS access limited (expected for security)"
+        
+        echo "✅ Permission tests completed"

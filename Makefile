@@ -120,6 +120,11 @@ github-troubleshoot: ## Troubleshoot GitHub Actions AWS OIDC issues
 	@echo "🔍 Running AWS OIDC troubleshooting..."
 	./scripts/troubleshoot-aws-oidc.sh
 
+github-test-auth: ## Test GitHub Actions AWS authentication
+	@echo "🧪 Testing GitHub Actions AWS authentication..."
+	@echo "📝 Push to 'develop' branch to trigger AWS auth test"
+	@echo "🔗 Check Actions tab for 'Test AWS Authentication' workflow"
+
 # Terraform Cloud commands (for infrastructure management)
 terraform-validate: ## Validate Terraform configuration locally
 	cd terraform && terraform validate
