@@ -263,5 +263,11 @@ jobs:
         
     - name: Invalidate CloudFront
       run: |
-        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Origins.Items[0].DomainName=='${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static.s3.amazonaws.com'].Id" --output text)
+        BUCKET_NAME=${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
+        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='S3 bucket distribution for ${BUCKET_NAME}'].Id" --output text)
+        if [ -z "$DISTRIBUTION_ID" ]; then
+          echo "Error: CloudFront distribution not found for bucket ${BUCKET_NAME}"
+          exit 1
+        fi
+        echo "Found CloudFront distribution: $DISTRIBUTION_ID"
         aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
