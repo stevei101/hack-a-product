@@ -12,6 +12,10 @@ jobs:
     name: 'Terraform Provision via Terraform Cloud'
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write # Required for AWS OIDC
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
