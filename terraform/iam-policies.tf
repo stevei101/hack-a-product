@@ -74,6 +74,12 @@ data "aws_iam_policy_document" "github_actions_permissions_policy" {
     ]
     resources = ["*"] # ECR actions are not resource-specific in the same way as S3
   }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["eks:DescribeCluster"]
+    resources = ["*"]
+  }
 }
 
 # The IAM policy that grants the permissions
