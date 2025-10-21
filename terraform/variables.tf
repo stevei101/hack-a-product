@@ -24,3 +24,15 @@ variable "github_repo" {
   description = "The name of your GitHub repository."
   type        = string
 }
+
+variable "tfc_organization" {
+  description = "The name of your Terraform Cloud organization."
+  type        = string
+  default     = "disposable-org"
+}
+
+variable "tfc_workspace_prefix" {
+  description = "The prefix for Terraform Cloud workspace names."
+  type        = string
+  default     = "product-mindset"
+}

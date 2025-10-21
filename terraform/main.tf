@@ -1,9 +1,20 @@
-# Main Terraform configuration for The Product Mindset (v0.12 compatible)
+# Main Terraform configuration for The Product Mindset
 terraform {
-  required_version = ">= 0.12"
+  required_version = ">= 1.1.0"
+
+  cloud {
+    organization = "disposable-org"
+
+    workspaces {
+      tags = ["product-mindset"]
+    }
+  }
 
   required_providers {
-    aws = "~> 3.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 

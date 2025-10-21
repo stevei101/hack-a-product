@@ -36,6 +36,7 @@ jobs:
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.6.0
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
         
     - name: Terraform Format Check
       run: terraform fmt -check
@@ -45,6 +46,7 @@ jobs:
       run: terraform init
       working-directory: ./terraform
       env:
+        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
@@ -55,6 +57,7 @@ jobs:
       run: terraform validate
       working-directory: ./terraform
       env:
+        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
@@ -62,9 +65,21 @@ jobs:
         TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -out=tfplan
       working-directory: ./terraform
       env:
+        TF_WORKSPACE: hack-a-product
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
+      
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+      working-directory: ./terraform
+      env:
+        TF_WORKSPACE: hack-a-product
         TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
