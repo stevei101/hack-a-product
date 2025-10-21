@@ -34,9 +34,22 @@ check_command() {
 MISSING_DEPS=0
 
 check_command "bun" || { echo "     Install from: https://bun.sh"; MISSING_DEPS=1; }
-check_command "python3" || { echo "     Install from: https://python.org"; MISSING_DEPS=1; }
 check_command "docker" || { echo "     Install from: https://docker.com"; MISSING_DEPS=1; }
 check_command "git" || { echo "     Usually pre-installed"; MISSING_DEPS=1; }
+
+# Check for uv (preferred) or python3
+if command -v uv >/dev/null 2>&1; then
+    echo "  ✓ uv installed (Python package manager)"
+elif command -v python3 >/dev/null 2>&1; then
+    echo "  ⚠️  python3 found, but uv is recommended"
+    echo "     Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.cargo/bin:$PATH"
+else
+    echo "  ❌ Neither uv nor python3 found"
+    echo "     Install from: https://docs.astral.sh/uv/"
+    MISSING_DEPS=1
+fi
 
 if [ $MISSING_DEPS -eq 1 ]; then
     echo ""
@@ -71,25 +84,18 @@ echo "🐍 [3/5] Setting up backend environment..."
 
 cd backend
 
-# Create virtual environment
+# Use uv for Python environment management
 if [ ! -d ".venv" ]; then
-    echo "  🔨 Creating Python virtual environment..."
-    python3 -m venv .venv
+    echo "  🔨 Creating Python virtual environment with uv..."
+    # Use uv to create venv with Python 3.11+ (automatically finds best version)
+    uv venv --python 3.11
 else
     echo "  ✓ Virtual environment exists"
 fi
 
-# Activate virtual environment
-echo "  🔧 Activating virtual environment..."
-source .venv/bin/activate
-
-# Upgrade pip and install uv
-echo "  📦 Installing package manager (uv)..."
-pip install --quiet --upgrade pip uv
-
-# Install dependencies
-echo "  📦 Installing backend dependencies..."
-uv pip install --quiet -e ".[dev]"
+# Install dependencies using uv (much faster than pip!)
+echo "  📦 Installing backend dependencies with uv..."
+uv pip install -e ".[dev]"
 
 echo "  ✅ Backend environment ready!"
 echo ""
