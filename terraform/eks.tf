@@ -116,35 +116,33 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
-resource "kubernetes_manifest" "aws_auth" {
+resource "kubernetes_config_map_v1_data" "aws_auth" {
   provider = kubernetes
+  force    = true
 
-  manifest = {
-    "apiVersion" = "v1"
-    "kind"       = "ConfigMap"
-    "metadata" = {
-      "name"      = "aws-auth"
-      "namespace" = "kube-system"
-    }
-    "data" = {
-      "mapRoles" = yamlencode([
-        {
-          "rolearn"  = aws_iam_role.eks_nodegroup_role.arn
-          "username" = "system:node:{{EC2PrivateDNSName}}"
-          "groups" = [
-            "system:bootstrappers",
-            "system:nodes",
-          ]
-        },
-        {
-          "rolearn"  = aws_iam_role.github_actions_role.arn
-          "username" = "github-actions"
-          "groups" = [
-            "system:masters",
-          ]
-        }
-      ])
-    }
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    "mapRoles" = yamlencode([
+      {
+        "rolearn"  = aws_iam_role.eks_nodegroup_role.arn
+        "username" = "system:node:{{EC2PrivateDNSName}}"
+        "groups" = [
+          "system:bootstrappers",
+          "system:nodes",
+        ]
+      },
+      {
+        "rolearn"  = aws_iam_role.github_actions_role.arn
+        "username" = "github-actions"
+        "groups" = [
+          "system:masters",
+        ]
+      }
+    ])
   }
 
   depends_on = [
