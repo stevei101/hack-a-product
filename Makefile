@@ -198,3 +198,40 @@ secure-start: security-setup backend-setup install ## Complete secure setup with
 full-setup: check-prerequisites install k8s-setup ## Complete setup including Kubernetes
 	@echo "🎉 Complete environment ready!"
 	@echo "Run 'make deploy' to deploy your app"
+
+# New: Streamlined development commands
+dev-setup: ## One-command development setup (recommended for new developers)
+	@./scripts/dev-setup.sh
+
+dev-start: ## Start all development services (frontend + backend + databases)
+	@echo "🚀 Starting development environment..."
+	@docker-compose up -d
+	@echo "⏳ Waiting for services..."
+	@sleep 3
+	@echo ""
+	@echo "🔧 Starting backend..."
+	@cd backend && source .venv/bin/activate && uvicorn agentic_app.main:app --reload --host 0.0.0.0 --port 8000 > ../logs/backend.log 2>&1 &
+	@echo "⚛️  Starting frontend..."
+	@bun run dev > logs/frontend.log 2>&1 &
+	@sleep 2
+	@echo ""
+	@echo "✅ Development environment running!"
+	@echo "   Frontend: http://localhost:3000"
+	@echo "   Backend:  http://localhost:8000/docs"
+	@echo "   Logs:     tail -f logs/*.log"
+	@echo ""
+	@echo "💡 Use 'make dev-stop' to stop all services"
+
+dev-stop: ## Stop all development services
+	@echo "🛑 Stopping development environment..."
+	@docker-compose down 2>/dev/null || true
+	@pkill -f "uvicorn agentic_app.main" 2>/dev/null || true
+	@pkill -f "bun run dev" 2>/dev/null || true
+	@echo "✅ All services stopped!"
+
+dev-logs: ## View development logs
+	@echo "📋 Development Logs (Ctrl+C to exit)"
+	@tail -f logs/*.log 2>/dev/null || echo "No logs found. Run 'make dev-start' first."
+
+apply-quick-wins: ## Apply quick-win improvements from code review
+	@./scripts/apply-quick-wins.sh
