@@ -222,6 +222,10 @@ This project includes a comprehensive `Makefile` with convenient shortcuts for a
 - `make security-report`: Generate security report
 - `make security-setup`: Set up secure environment and run security scan
 
+### 🚀 GitHub Actions Commands
+- `make github-secrets`: Show required GitHub repository secrets
+- `make github-deploy`: Trigger GitHub Actions deployment
+
 ### 🐳 Container Commands
 - `make container-build`: Build both frontend and backend containers
 - `make container-build-registry REGISTRY=your-registry`: Build and tag for registry
@@ -304,4 +308,6 @@ curl -X POST http://localhost:8000/api/v1/rag/chat \
 - **[Security Report](SECURITY_REPORT.md)**: Security vulnerability analysis
 - **[Security Fixes](SECURITY_FIXES.md)**: Step-by-step security implementation guide
 - **[Container Registry Guide](CONTAINER_REGISTRY_GUIDE.md)**: Container registry setup and deployment
+- **[GitHub Actions Setup](GITHUB_ACTIONS_SETUP.md)**: Automated deployment with GitHub Actions
+- **[AWS Permissions Setup](AWS_PERMISSIONS_SETUP.md)**: IAM configuration for secure deployment
 - **[Submission Summary](SUBMISSION_SUMMARY.md)**: Hackathon submission details
