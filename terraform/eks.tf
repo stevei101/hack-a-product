@@ -19,6 +19,7 @@ resource "aws_subnet" "eks_subnet_a" {
 
   tags = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                     = "1"
   }
 }
 
@@ -29,6 +30,7 @@ resource "aws_subnet" "eks_subnet_b" {
 
   tags = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                     = "1"
   }
 }
 
