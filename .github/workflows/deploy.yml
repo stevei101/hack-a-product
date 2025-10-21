@@ -107,11 +107,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Debug GitHub context
+      run: |
+        echo "Repository: ${{ github.repository }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "AWS_ROLE_ARN secret exists: ${{ secrets.AWS_ROLE_ARN != '' }}"
+      
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
         
     - name: Login to Amazon ECR
       id: login-ecr
@@ -199,6 +208,7 @@ jobs:
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
         
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1

@@ -116,6 +116,10 @@ github-deploy: ## Trigger GitHub Actions deployment
 	@echo "📝 Push to 'main' or 'develop' branch to trigger deployment"
 	@echo "🔗 Check Actions tab in your GitHub repository"
 
+github-troubleshoot: ## Troubleshoot GitHub Actions AWS OIDC issues
+	@echo "🔍 Running AWS OIDC troubleshooting..."
+	./scripts/troubleshoot-aws-oidc.sh
+
 # Terraform Cloud commands (for infrastructure management)
 terraform-validate: ## Validate Terraform configuration locally
 	cd terraform && terraform validate
