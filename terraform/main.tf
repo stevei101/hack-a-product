@@ -8,6 +8,10 @@ terraform {
 }
 
 # Configure the AWS Provider
+provider "aws" {
+  region = var.aws_region
+}
+
 # S3 Bucket for Static Website Hosting
 resource "aws_s3_bucket" "site" {
   bucket = var.bucket_name

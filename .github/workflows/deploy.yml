@@ -17,9 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
+    permissions:
+      id-token: write
+      contents: read
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
       
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -34,6 +45,7 @@ jobs:
       run: terraform init
       working-directory: ./terraform
       env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
@@ -43,6 +55,7 @@ jobs:
       run: terraform validate
       working-directory: ./terraform
       env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
@@ -52,6 +65,7 @@ jobs:
       run: terraform plan
       working-directory: ./terraform
       env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
