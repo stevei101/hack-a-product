@@ -30,3 +30,32 @@ resource "aws_s3_bucket_public_access_block" "site_public_access_block" {
 resource "aws_s3_bucket_website_configuration" "site_config" {
   bucket = aws_s3_bucket.site.id
 }
+
+# ECR Repositories
+resource "aws_ecr_repository" "frontend" {
+  name                 = "smithveunsa/react-bun-k8s-frontend"
+  image_tag_mutability = "IMMUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "Frontend Container Registry"
+    Environment = var.environment
+  }
+}
+
+resource "aws_ecr_repository" "backend" {
+  name                 = "smithveunsa/react-bun-k8s-backend"
+  image_tag_mutability = "IMMUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "Backend Container Registry"
+    Environment = var.environment
+  }
+}

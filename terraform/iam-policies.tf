@@ -58,6 +58,19 @@ data "aws_iam_policy_document" "github_actions_permissions_policy" {
     actions   = ["cloudfront:CreateInvalidation"]
     resources = [aws_cloudfront_distribution.s3_distribution.arn]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:PutImage"
+    ]
+    resources = ["*"] # ECR actions are not resource-specific in the same way as S3
+  }
 }
 
 # The IAM policy that grants the permissions

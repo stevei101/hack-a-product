@@ -129,7 +129,7 @@ jobs:
     - name: Build and push frontend image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-frontend
+        ECR_REPOSITORY: smithveunsa/react-bun-k8s-frontend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -140,7 +140,7 @@ jobs:
     - name: Build and push backend image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-backend
+        ECR_REPOSITORY: smithveunsa/react-bun-k8s-backend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
@@ -160,8 +160,8 @@ jobs:
     - name: Deploy with Helm
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY_FRONTEND: ${{ env.PROJECT_NAME }}-frontend
-        ECR_REPOSITORY_BACKEND: ${{ env.PROJECT_NAME }}-backend
+        ECR_REPOSITORY_FRONTEND: smithveunsa/react-bun-k8s-frontend
+        ECR_REPOSITORY_BACKEND: smithveunsa/react-bun-k8s-backend
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
       run: |
