@@ -36,3 +36,9 @@ variable "tfc_workspace_prefix" {
   type        = string
   default     = "product-mindset"
 }
+
+variable "cluster_name" {
+  description = "The name of the EKS cluster."
+  type        = string
+  default     = "product-mindset-dev"
+}
