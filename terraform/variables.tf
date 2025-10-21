@@ -24,3 +24,9 @@ variable "github_repository" {
   description = "The name of your GitHub repository."
   type        = string
 }
+
+variable "project_name" {
+  description = "The name of the project, used for naming resources."
+  type        = string
+  default     = "product-mindset"
+}
