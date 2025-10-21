@@ -44,6 +44,14 @@ resource "aws_s3_bucket_public_access_block" "site_public_access_block" {
 
 resource "aws_s3_bucket_website_configuration" "site_config" {
   bucket = aws_s3_bucket.site.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
 }
 
 # ECR Repositories
