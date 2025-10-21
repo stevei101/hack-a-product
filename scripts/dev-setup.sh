@@ -34,7 +34,6 @@ check_command() {
 MISSING_DEPS=0
 
 check_command "bun" || { echo "     Install from: https://bun.sh"; MISSING_DEPS=1; }
-check_command "docker" || { echo "     Install from: https://docker.com"; MISSING_DEPS=1; }
 check_command "git" || { echo "     Usually pre-installed"; MISSING_DEPS=1; }
 
 # Check for uv (preferred) or python3
@@ -48,6 +47,22 @@ elif command -v python3 >/dev/null 2>&1; then
 else
     echo "  ❌ Neither uv nor python3 found"
     echo "     Install from: https://docs.astral.sh/uv/"
+    MISSING_DEPS=1
+fi
+
+# Check for container runtime (Podman or Docker)
+if command -v podman >/dev/null 2>&1; then
+    echo "  ✓ podman installed (container runtime)"
+    CONTAINER_CMD="podman"
+    COMPOSE_CMD="podman compose"
+elif command -v docker >/dev/null 2>&1; then
+    echo "  ✓ docker installed (container runtime)"
+    CONTAINER_CMD="docker"
+    COMPOSE_CMD="docker-compose"
+else
+    echo "  ⚠️  Neither podman nor docker found"
+    echo "     Install podman: https://podman.io/getting-started/installation"
+    echo "     Or docker: https://docker.com"
     MISSING_DEPS=1
 fi
 
@@ -142,21 +157,22 @@ echo ""
 
 echo "🐳 [5/5] Starting local services (PostgreSQL & Redis)..."
 
-if command -v docker-compose >/dev/null 2>&1 || command -v docker >/dev/null 2>&1; then
+if [ -n "$COMPOSE_CMD" ]; then
     if [ -f "docker-compose.yml" ]; then
-        echo "  🚀 Starting PostgreSQL and Redis with Docker Compose..."
-        docker-compose up -d
+        echo "  🚀 Starting PostgreSQL and Redis with $COMPOSE_CMD..."
+        $COMPOSE_CMD up -d
         
         echo "  ⏳ Waiting for services to be healthy..."
         sleep 5
         
         echo "  ✅ Services started!"
+        echo "  📊 Check status: $COMPOSE_CMD ps"
     else
         echo "  ⚠️  docker-compose.yml not found. Services not started."
         echo "      Run ./scripts/apply-quick-wins.sh to create it."
     fi
 else
-    echo "  ⚠️  Docker not running. Skipping service startup."
+    echo "  ⚠️  Container runtime not available. Skipping service startup."
 fi
 
 echo ""

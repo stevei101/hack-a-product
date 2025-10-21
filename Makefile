@@ -66,40 +66,53 @@ clean: ## Clean build artifacts
 	rm -rf node_modules/
 
 # Container commands (auto-detects Docker/Podman)
+CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null || echo "")
+COMPOSE_CMD := $(shell command -v podman 2>/dev/null && echo "podman compose" || echo "docker-compose")
+
 container-build: ## Build container images for both frontend and backend
+	@if [ -z "$(CONTAINER_CMD)" ]; then \
+		echo "❌ Error: Neither podman nor docker found"; \
+		echo "   Install podman: https://podman.io"; \
+		exit 1; \
+	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Building frontend container..."
-	docker build -t smithveunsa/react-bun-k8s:frontend .
+	$(CONTAINER_CMD) build -t smithveunsa/react-bun-k8s:frontend .
 	@echo "Building backend container..."
-	docker build -t smithveunsa/react-bun-k8s:backend ./backend
+	$(CONTAINER_CMD) build -t smithveunsa/react-bun-k8s:backend ./backend
 
 container-build-registry: ## Build and tag for registry (usage: make container-build-registry REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "❌ Please specify REGISTRY (e.g., make container-build-registry REGISTRY=ghcr.io/username)"; \
 		exit 1; \
 	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Building and tagging for registry: $(REGISTRY)"
-	docker build -t $(REGISTRY):frontend .
-	docker build -t $(REGISTRY):backend ./backend
+	$(CONTAINER_CMD) build -t $(REGISTRY):frontend .
+	$(CONTAINER_CMD) build -t $(REGISTRY):backend ./backend
 
 container-run: ## Run containers locally
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Starting backend container..."
-	docker run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
+	$(CONTAINER_CMD) run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
 	@echo "Starting frontend container..."
-	docker run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
+	$(CONTAINER_CMD) run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
 	@echo "✅ Containers started! Backend: http://localhost:8000, Frontend: http://localhost:3000"
 
 container-stop: ## Stop running containers
-	docker stop backend frontend || true
-	docker rm backend frontend || true
+	@echo "🛑 Stopping containers..."
+	$(CONTAINER_CMD) stop backend frontend || true
+	$(CONTAINER_CMD) rm backend frontend || true
 
 container-push: ## Push containers to registry (usage: make container-push REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "❌ Please specify REGISTRY (e.g., make container-push REGISTRY=ghcr.io/username)"; \
 		exit 1; \
 	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Pushing to registry: $(REGISTRY)"
-	docker push $(REGISTRY):frontend
-	docker push $(REGISTRY):backend
+	$(CONTAINER_CMD) push $(REGISTRY):frontend
+	$(CONTAINER_CMD) push $(REGISTRY):backend
 
 # GitHub Actions Deployment commands
 github-secrets: ## Show required GitHub repository secrets
@@ -205,7 +218,8 @@ dev-setup: ## One-command development setup (recommended for new developers)
 
 dev-start: ## Start all development services (frontend + backend + databases)
 	@echo "🚀 Starting development environment..."
-	@docker-compose up -d
+	@echo "🐳 Using: $(COMPOSE_CMD)"
+	@$(COMPOSE_CMD) up -d
 	@echo "⏳ Waiting for services..."
 	@sleep 3
 	@echo ""
@@ -224,7 +238,7 @@ dev-start: ## Start all development services (frontend + backend + databases)
 
 dev-stop: ## Stop all development services
 	@echo "🛑 Stopping development environment..."
-	@docker-compose down 2>/dev/null || true
+	@$(COMPOSE_CMD) down 2>/dev/null || true
 	@pkill -f "uvicorn agentic_app.main" 2>/dev/null || true
 	@pkill -f "bun run dev" 2>/dev/null || true
 	@echo "✅ All services stopped!"

@@ -1,0 +1,45 @@
+version: '3.8'
+
+# Compatible with both Docker Compose and Podman Compose
+# Usage:
+#   Docker:  docker-compose up -d
+#   Podman:  podman compose up -d  (or podman-compose up -d)
+
+services:
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    container_name: product-mindset-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: agentic_app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: product-mindset-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server --save 60 1 --loglevel warning
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
