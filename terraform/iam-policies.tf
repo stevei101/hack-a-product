@@ -10,18 +10,18 @@ data "aws_region" "current" {}
 # OIDC Provider for GitHub Actions (if not already exists)
 resource "aws_iam_openid_connect_provider" "github" {
   count = var.create_github_oidc_provider ? 1 : 0
-  
+
   url = "https://token.actions.githubusercontent.com"
-  
+
   client_id_list = [
     "sts.amazonaws.com",
   ]
-  
+
   thumbprint_list = [
     "6938fd4d98bab03faadb97b34396831e3780aea1",
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
   ]
-  
+
   tags = {
     Name        = "github-oidc-provider"
     Environment = var.environment
@@ -33,7 +33,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 resource "aws_iam_policy" "terraform_cloud_policy" {
   name        = "${var.project_name}-terraform-cloud-${var.environment}"
   description = "Policy for Terraform Cloud to manage infrastructure for ${var.project_name}"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -126,7 +126,7 @@ resource "aws_iam_policy" "terraform_cloud_policy" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-terraform-cloud-policy"
     Environment = var.environment
@@ -137,7 +137,7 @@ resource "aws_iam_policy" "terraform_cloud_policy" {
 # IAM Role for GitHub Actions with OIDC
 resource "aws_iam_role" "github_actions_role" {
   name = "${var.project_name}-github-actions-${var.environment}"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -158,7 +158,7 @@ resource "aws_iam_role" "github_actions_role" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-github-actions-role"
     Environment = var.environment
@@ -170,7 +170,7 @@ resource "aws_iam_role" "github_actions_role" {
 resource "aws_iam_policy" "github_actions_policy" {
   name        = "${var.project_name}-github-actions-${var.environment}"
   description = "Policy for GitHub Actions to deploy ${var.project_name}"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -223,7 +223,7 @@ resource "aws_iam_policy" "github_actions_policy" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-github-actions-policy"
     Environment = var.environment
@@ -240,7 +240,7 @@ resource "aws_iam_role_policy_attachment" "github_actions_policy_attachment" {
 # IAM Role for EKS Service (for agentic application)
 resource "aws_iam_role" "eks_service_role" {
   name = "${var.project_name}-eks-service-${var.environment}"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -253,7 +253,7 @@ resource "aws_iam_role" "eks_service_role" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-eks-service-role"
     Environment = var.environment
@@ -267,7 +267,7 @@ resource "aws_iam_role_policy_attachment" "eks_service_policy" {
     "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
     "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   ])
-  
+
   role       = aws_iam_role.eks_service_role.name
   policy_arn = each.value
 }
@@ -275,7 +275,7 @@ resource "aws_iam_role_policy_attachment" "eks_service_policy" {
 # IAM Role for EKS Node Group
 resource "aws_iam_role" "eks_node_group_role" {
   name = "${var.project_name}-eks-node-group-${var.environment}"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -288,7 +288,7 @@ resource "aws_iam_role" "eks_node_group_role" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-eks-node-group-role"
     Environment = var.environment
@@ -303,7 +303,7 @@ resource "aws_iam_role_policy_attachment" "eks_node_group_policy" {
     "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
     "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   ])
-  
+
   role       = aws_iam_role.eks_node_group_role.name
   policy_arn = each.value
 }
