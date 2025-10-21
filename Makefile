@@ -67,7 +67,7 @@ clean: ## Clean build artifacts
 
 # Container commands (auto-detects Docker/Podman)
 CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null || echo "")
-COMPOSE_CMD := $(shell command -v podman 2>/dev/null && echo "podman compose" || echo "docker-compose")
+COMPOSE_CMD := $(shell if command -v podman >/dev/null 2>&1; then echo "podman compose"; else echo "docker-compose"; fi)
 
 container-build: ## Build container images for both frontend and backend
 	@if [ -z "$(CONTAINER_CMD)" ]; then \
