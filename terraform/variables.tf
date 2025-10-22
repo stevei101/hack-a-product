@@ -15,7 +15,7 @@ variable "environment" {
   default     = "development"
 }
 
-variable "github_org" {
+variable "github_organization" {
   description = "The name of your GitHub organization."
   type        = string
 }

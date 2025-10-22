@@ -6,7 +6,7 @@ project_name = "product-mindset"
 environment  = "dev"  # dev, staging, prod
 
 # GitHub Configuration
-github_org  = "stevei101"        # Your GitHub organization
+github_organization  = "stevei101"        # Your GitHub organization
 github_repository = "hack-a-product"   # Your repository name
 
 # AWS Configuration
