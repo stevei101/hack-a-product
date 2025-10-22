@@ -30,6 +30,7 @@ provider "aws" {
 # S3 Bucket for Static Website Hosting
 resource "aws_s3_bucket" "site" {
   bucket = var.bucket_name
+  force_destroy = true
 
   tags = {
     Name        = "Static Site Bucket"
