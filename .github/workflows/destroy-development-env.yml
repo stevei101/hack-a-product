@@ -5,6 +5,10 @@ name: 'Destroy Develop Environment'
 on:
   workflow_dispatch:
 
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: product-mindset
+
 jobs:
   terraform-destroy:
     name: 'Terraform Destroy'
@@ -39,11 +43,17 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubAction-AssumeRoleWithAction
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-region: ${{ env.AWS_REGION }}
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, and downloading modules
     - name: Terraform Init
       run: terraform init
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
 
     # Generate a plan to destroy all remote objects
     - name: Terraform Plan (Destroy)
@@ -51,6 +61,12 @@ jobs:
       run: |
         terraform plan -destroy -no-color -input=false -out=destroy.tfplan | tee plan_output.txt
       continue-on-error: false
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
 
     # Show what will be destroyed
     - name: Show Resources to be Destroyed
@@ -127,6 +143,12 @@ jobs:
         echo "💥 Destroying infrastructure in 5 seconds..."
         sleep 5
         terraform destroy -auto-approve -input=false
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
         
     # Confirm destruction
     - name: Destruction Complete
