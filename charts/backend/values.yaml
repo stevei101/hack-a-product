@@ -77,7 +77,6 @@ env:
   REDIS_URL: "redis://redis-service:6379"
   
   NIM_BASE_URL: "https://integrate.api.nvidia.com/v1"
-  NIM_API_KEY: "changeme-nvidia-api-key"
   NIM_MODEL_NAME: "nvidia/llama-3_1-nemotron-nano-8b-v1"
   NIM_EMBEDDING_MODEL: "nvidia/nv-embedqa-e5-v5"
   
