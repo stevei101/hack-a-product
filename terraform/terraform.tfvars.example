@@ -7,7 +7,7 @@ environment  = "dev"  # dev, staging, prod
 
 # GitHub Configuration
 github_org  = "stevei101"        # Your GitHub organization
-github_repo = "hack-a-product"   # Your repository name
+github_repository = "hack-a-product"   # Your repository name
 
 # AWS Configuration
 aws_region = "us-east-1"
