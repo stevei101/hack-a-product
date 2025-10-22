@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  AWS_REGION: us-west-2
+  AWS_REGION: us-east-1
   PROJECT_NAME: product-mindset
 
 jobs:
@@ -17,14 +17,26 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
+    permissions:
+      id-token: write
+      contents: read
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
       
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.6.0
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
         
     - name: Terraform Format Check
       run: terraform fmt -check
@@ -33,18 +45,42 @@ jobs:
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
       
     - name: Terraform Validate
       run: terraform validate
       working-directory: ./terraform
-      
-    - name: Terraform Plan
-      run: terraform plan
-      working-directory: ./terraform
       env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
         TF_VAR_github_org: ${{ github.repository_owner }}
         TF_VAR_github_repo: ${{ github.event.repository.name }}
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
+      
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      working-directory: ./terraform
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
+      
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -input=false
+      working-directory: ./terraform
+      env:
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_github_org: ${{ github.repository_owner }}
+        TF_VAR_github_repo: ${{ github.event.repository.name }}
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_bucket_name: ${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
 
   # Build and test the application
   build-and-test:
@@ -96,7 +132,7 @@ jobs:
   deploy:
     name: Deploy to EKS
     runs-on: ubuntu-latest
-    needs: [build-and-test]
+    needs: [infrastructure, build-and-test]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
     permissions:
@@ -107,11 +143,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Debug GitHub context
+      run: |
+        echo "Repository: ${{ github.repository }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "AWS_ROLE_ARN secret exists: ${{ secrets.AWS_ROLE_ARN != '' }}"
+      
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
         
     - name: Login to Amazon ECR
       id: login-ecr
@@ -120,7 +165,7 @@ jobs:
     - name: Build and push frontend image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-frontend
+        ECR_REPOSITORY: smithveunsa/react-bun-k8s-frontend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -131,7 +176,7 @@ jobs:
     - name: Build and push backend image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-backend
+        ECR_REPOSITORY: smithveunsa/react-bun-k8s-backend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
@@ -151,8 +196,8 @@ jobs:
     - name: Deploy with Helm
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY_FRONTEND: ${{ env.PROJECT_NAME }}-frontend
-        ECR_REPOSITORY_BACKEND: ${{ env.PROJECT_NAME }}-backend
+        ECR_REPOSITORY_FRONTEND: smithveunsa/react-bun-k8s-frontend
+        ECR_REPOSITORY_BACKEND: smithveunsa/react-bun-k8s-backend
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
       run: |
@@ -183,7 +228,7 @@ jobs:
   deploy-static:
     name: Deploy Static Website
     runs-on: ubuntu-latest
-    needs: [build-and-test]
+    needs: [infrastructure, build-and-test]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
     permissions:
@@ -199,6 +244,7 @@ jobs:
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions-${{ github.run_id }}
         
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -217,5 +263,11 @@ jobs:
         
     - name: Invalidate CloudFront
       run: |
-        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Origins.Items[0].DomainName=='${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static.s3.amazonaws.com'].Id" --output text)
+        BUCKET_NAME=${{ env.PROJECT_NAME }}-${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}-static
+        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='S3 bucket distribution for ${BUCKET_NAME}'].Id" --output text)
+        if [ -z "$DISTRIBUTION_ID" ]; then
+          echo "Error: CloudFront distribution not found for bucket ${BUCKET_NAME}"
+          exit 1
+        fi
+        echo "Found CloudFront distribution: $DISTRIBUTION_ID"
         aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"

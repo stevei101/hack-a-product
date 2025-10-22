@@ -10,7 +10,7 @@ github_org  = "stevei101"        # Your GitHub organization
 github_repo = "hack-a-product"   # Your repository name
 
 # AWS Configuration
-aws_region = "us-west-2"
+aws_region = "us-east-1"
 
 # Domain Configuration (optional)
 domain_name = ""  # Leave empty if not using custom domain

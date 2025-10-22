@@ -66,46 +66,59 @@ clean: ## Clean build artifacts
 	rm -rf node_modules/
 
 # Container commands (auto-detects Docker/Podman)
+CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null || echo "")
+COMPOSE_CMD := $(shell if command -v podman >/dev/null 2>&1; then echo "podman compose"; else echo "docker-compose"; fi)
+
 container-build: ## Build container images for both frontend and backend
+	@if [ -z "$(CONTAINER_CMD)" ]; then \
+		echo "❌ Error: Neither podman nor docker found"; \
+		echo "   Install podman: https://podman.io"; \
+		exit 1; \
+	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Building frontend container..."
-	docker build -t smithveunsa/react-bun-k8s:frontend .
+	$(CONTAINER_CMD) build -t smithveunsa/react-bun-k8s:frontend .
 	@echo "Building backend container..."
-	docker build -t smithveunsa/react-bun-k8s:backend ./backend
+	$(CONTAINER_CMD) build -t smithveunsa/react-bun-k8s:backend ./backend
 
 container-build-registry: ## Build and tag for registry (usage: make container-build-registry REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "❌ Please specify REGISTRY (e.g., make container-build-registry REGISTRY=ghcr.io/username)"; \
 		exit 1; \
 	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Building and tagging for registry: $(REGISTRY)"
-	docker build -t $(REGISTRY):frontend .
-	docker build -t $(REGISTRY):backend ./backend
+	$(CONTAINER_CMD) build -t $(REGISTRY):frontend .
+	$(CONTAINER_CMD) build -t $(REGISTRY):backend ./backend
 
 container-run: ## Run containers locally
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Starting backend container..."
-	docker run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
+	$(CONTAINER_CMD) run -d --name backend -p 8000:8000 smithveunsa/react-bun-k8s:backend
 	@echo "Starting frontend container..."
-	docker run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
+	$(CONTAINER_CMD) run -d --name frontend -p 3000:80 smithveunsa/react-bun-k8s:frontend
 	@echo "✅ Containers started! Backend: http://localhost:8000, Frontend: http://localhost:3000"
 
 container-stop: ## Stop running containers
-	docker stop backend frontend || true
-	docker rm backend frontend || true
+	@echo "🛑 Stopping containers..."
+	$(CONTAINER_CMD) stop backend frontend || true
+	$(CONTAINER_CMD) rm backend frontend || true
 
 container-push: ## Push containers to registry (usage: make container-push REGISTRY=ghcr.io/username)
 	@if [ -z "$(REGISTRY)" ]; then \
 		echo "❌ Please specify REGISTRY (e.g., make container-push REGISTRY=ghcr.io/username)"; \
 		exit 1; \
 	fi
+	@echo "🐳 Using: $(CONTAINER_CMD)"
 	@echo "Pushing to registry: $(REGISTRY)"
-	docker push $(REGISTRY):frontend
-	docker push $(REGISTRY):backend
+	$(CONTAINER_CMD) push $(REGISTRY):frontend
+	$(CONTAINER_CMD) push $(REGISTRY):backend
 
 # GitHub Actions Deployment commands
 github-secrets: ## Show required GitHub repository secrets
 	@echo "🔐 Required GitHub Repository Secrets:"
 	@echo "  AWS_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT:role/product-mindset-github-actions-dev"
-	@echo "  AWS_REGION=us-west-2"
+	@echo "  AWS_REGION=us-east-1"
 	@echo "  NIM_API_KEY=your_nvidia_api_key"
 	@echo "  POSTGRES_PASSWORD=your_secure_password"
 	@echo ""
@@ -115,6 +128,23 @@ github-deploy: ## Trigger GitHub Actions deployment
 	@echo "🚀 Triggering GitHub Actions deployment..."
 	@echo "📝 Push to 'main' or 'develop' branch to trigger deployment"
 	@echo "🔗 Check Actions tab in your GitHub repository"
+
+github-troubleshoot: ## Troubleshoot GitHub Actions AWS OIDC issues
+	@echo "🔍 Running AWS OIDC troubleshooting..."
+	./scripts/troubleshoot-aws-oidc.sh
+
+github-test-auth: ## Test GitHub Actions AWS authentication
+	@echo "🧪 Testing GitHub Actions AWS authentication..."
+	@echo "📝 Push to 'develop' branch to trigger AWS auth test"
+	@echo "🔗 Check Actions tab for 'Test AWS Authentication' workflow"
+
+github-verify: ## Verify GitHub repository configuration
+	@echo "🔍 Verifying GitHub repository setup..."
+	./scripts/verify-github-setup.sh
+
+github-config: ## Check GitHub configuration checklist
+	@echo "📋 GitHub configuration checklist..."
+	./scripts/check-github-config.sh
 
 # Terraform Cloud commands (for infrastructure management)
 terraform-validate: ## Validate Terraform configuration locally
@@ -181,3 +211,41 @@ secure-start: security-setup backend-setup install ## Complete secure setup with
 full-setup: check-prerequisites install k8s-setup ## Complete setup including Kubernetes
 	@echo "🎉 Complete environment ready!"
 	@echo "Run 'make deploy' to deploy your app"
+
+# New: Streamlined development commands
+dev-setup: ## One-command development setup (recommended for new developers)
+	@./scripts/dev-setup.sh
+
+dev-start: ## Start all development services (frontend + backend + databases)
+	@echo "🚀 Starting development environment..."
+	@echo "🐳 Using: $(COMPOSE_CMD)"
+	@$(COMPOSE_CMD) up -d
+	@echo "⏳ Waiting for services..."
+	@sleep 3
+	@echo ""
+	@echo "🔧 Starting backend..."
+	@cd backend && source .venv/bin/activate && uvicorn agentic_app.main:app --reload --host 0.0.0.0 --port 8000 > ../logs/backend.log 2>&1 &
+	@echo "⚛️  Starting frontend..."
+	@bun run dev > logs/frontend.log 2>&1 &
+	@sleep 2
+	@echo ""
+	@echo "✅ Development environment running!"
+	@echo "   Frontend: http://localhost:3000"
+	@echo "   Backend:  http://localhost:8000/docs"
+	@echo "   Logs:     tail -f logs/*.log"
+	@echo ""
+	@echo "💡 Use 'make dev-stop' to stop all services"
+
+dev-stop: ## Stop all development services
+	@echo "🛑 Stopping development environment..."
+	@$(COMPOSE_CMD) down 2>/dev/null || true
+	@pkill -f "uvicorn agentic_app.main" 2>/dev/null || true
+	@pkill -f "bun run dev" 2>/dev/null || true
+	@echo "✅ All services stopped!"
+
+dev-logs: ## View development logs
+	@echo "📋 Development Logs (Ctrl+C to exit)"
+	@tail -f logs/*.log 2>/dev/null || echo "No logs found. Run 'make dev-start' first."
+
+apply-quick-wins: ## Apply quick-win improvements from code review
+	@./scripts/apply-quick-wins.sh

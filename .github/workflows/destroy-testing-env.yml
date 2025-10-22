@@ -1,0 +1,68 @@
+# .github/workflows/destroy-testing-env.yml
+
+name: 'Destroy Develop Environment'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform-destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    environment: develop
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: latest
+        terraform_wrapper: false
+
+    # Configure AWS credentials from the OIDC provider
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubAction-AssumeRoleWithAction
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, and downloading modules
+    - name: Terraform Init
+      run: terraform init
+
+    # Generate a plan to destroy all remote objects
+    - name: Terraform Plan (Destroy)
+      id: plan
+      run: terraform plan -destroy -no-color -input=false
+      continue-on-error: true
+
+    # Show the destroy plan in the PR for review
+    - name: 'Comment on PR with Plan'
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const output = `#### Terraform Destroy Plan 📖`${{ steps.plan.outputs.stdout }}`
+          *Pusher: @${{ github.actor }}, Action: `${{ github.event_name }}`*
+          `;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    # On push to testing, automatically destroy the remote objects
+    - name: Terraform Destroy
+      if: github.ref == 'refs/heads/develop' && github.event_name == 'workflow_dispatch'
+      run: terraform destroy -auto-approve -input=false
