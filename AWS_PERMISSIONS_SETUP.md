@@ -32,7 +32,7 @@ Add these secrets to your GitHub repository:
 
 ```
 AWS_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT:role/product-mindset-github-actions-dev
-AWS_REGION=us-west-2
+AWS_REGION=us-east-1
 NIM_API_KEY=your_nvidia_api_key
 POSTGRES_PASSWORD=your_secure_password
 ```

@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "github_actions_trust_policy" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_organization}/${var.github_repository}:ref:refs/heads/develop"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/develop"]
     }
 
     condition {
@@ -54,9 +54,31 @@ data "aws_iam_policy_document" "github_actions_permissions_policy" {
   }
 
   statement {
+    effect = "Allow"
+    actions = [
+      "cloudfront:CreateInvalidation",
+      "cloudfront:ListDistributions"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:PutImage"
+    ]
+    resources = ["*"] # ECR actions are not resource-specific in the same way as S3
+  }
+
+  statement {
     effect    = "Allow"
-    actions   = ["cloudfront:CreateInvalidation"]
-    resources = [aws_cloudfront_distribution.s3_distribution.arn]
+    actions   = ["eks:DescribeCluster"]
+    resources = ["*"]
   }
 }
 

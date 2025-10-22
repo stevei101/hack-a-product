@@ -199,4 +199,19 @@ scripts/lldb-inline
 cmake/sources/*.txt
 
 # Python virtual environment
-**/.venv
+.venv/
+venv/
+backend/.venv/
+backend/venv/
+env/
+ENV/
+**/.venv/
+**/venv/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+logs/
