@@ -26,13 +26,14 @@ test: ## Run tests (placeholder - add your test command here)
 
 # Backend Development commands
 backend-dev: ## Start backend development server
-	cd backend && source .venv/bin/activate && python3 test_server.py
+	cd backend && source .venv/bin/activate && uvicorn agentic_app.main:app --reload --host 0.0.0.0 --port 8000
 
-backend-setup: ## Set up backend environment
+backend-setup: ## Set up backend environment with uv
 	@if [ ! -d "backend/.venv" ]; then \
 		cd backend && python3 -m venv .venv; \
 	fi
-	cd backend && source .venv/bin/activate && pip install uv && uv pip install fastapi uvicorn sqlalchemy asyncpg httpx pydantic pydantic-settings numpy
+	cd backend && source .venv/bin/activate && pip install uv
+	cd backend && source .venv/bin/activate && uv pip install -r requirements.txt
 
 backend-env: ## Create secure environment variables file
 	./setup_env.sh
@@ -65,14 +66,45 @@ clean: ## Clean build artifacts
 	rm -rf dist/
 	rm -rf node_modules/
 
-# Container commands (auto-detects Docker/Podman)
+clean-all: ## Clean everything and kill all processes (fixes port conflicts)
+	@echo "🧹 Cleaning everything and stopping all processes..."
+	@echo "🛑 Stopping all development services..."
+	@pkill -f "uvicorn agentic_app.main" 2>/dev/null || true
+	@pkill -f "bun run dev" 2>/dev/null || true
+	@pkill -f "python3 test_server.py" 2>/dev/null || true
+	@pkill -f "uvicorn" 2>/dev/null || true
+	@echo "🐳 Stopping containers..."
+	@$(COMPOSE_CMD) down 2>/dev/null || true
+	@$(CONTAINER_CMD) stop backend frontend 2>/dev/null || true
+	@$(CONTAINER_CMD) rm backend frontend 2>/dev/null || true
+	@echo "🗑️  Cleaning build artifacts..."
+	@rm -rf dist/ 2>/dev/null || true
+	@rm -rf node_modules/ 2>/dev/null || true
+	@rm -rf logs/*.log 2>/dev/null || true
+	@echo "🧽 Cleaning Python cache (fast)..."
+	@find . -maxdepth 3 -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find . -maxdepth 3 -name "*.pyc" -type f -delete 2>/dev/null || true
+	@echo "✅ Clean complete! All processes stopped and artifacts removed."
+	@echo "💡 Run 'make backend-dev' to start fresh backend"
+	@echo "💡 Run 'make dev' to start fresh frontend"
+
+kill-ports: ## Kill processes using common development ports
+	@echo "🔫 Killing processes on development ports..."
+	@lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:5432 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:6379 | xargs kill -9 2>/dev/null || true
+	@echo "✅ Ports cleared!"
+
+# Container commands (auto-detects Podman/Docker, prefers Podman)
 CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null || echo "")
 COMPOSE_CMD := $(shell if command -v podman >/dev/null 2>&1; then echo "podman compose"; else echo "docker-compose"; fi)
 
-container-build: ## Build container images for both frontend and backend
+container-build: ## Build container images for both frontend and backend (uses Podman)
 	@if [ -z "$(CONTAINER_CMD)" ]; then \
 		echo "❌ Error: Neither podman nor docker found"; \
 		echo "   Install podman: https://podman.io"; \
+		echo "   Or install docker: https://docker.com"; \
 		exit 1; \
 	fi
 	@echo "🐳 Using: $(CONTAINER_CMD)"

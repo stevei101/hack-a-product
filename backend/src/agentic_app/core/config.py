@@ -99,6 +99,13 @@ class Settings(BaseSettings):
     NIM_MODEL_NAME: str = "nvidia/llama-3_1-nemotron-nano-8b-v1"
     NIM_EMBEDDING_MODEL: str = "nvidia/nv-embedqa-e5-v5"
 
+    # MCP Server API Keys (Optional - tools will be disabled if not provided)
+    GEMINI_API_KEY: str = ""
+    FIGMA_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    GITHUB_ACCESS_TOKEN: str = ""
+    CURSOR_API_KEY: str = ""
+
     @field_validator("NIM_API_KEY", mode="before")
     @classmethod
     def validate_nim_api_key(cls, v: str) -> str:

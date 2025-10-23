@@ -21,3 +21,11 @@ async def verify_api_key(credentials: str = Depends(api_key_header)):
         )
     
     return credentials
+
+async def get_current_api_key(credentials: str = Depends(api_key_header)):
+    """Get the current API key from the request header."""
+    return await verify_api_key(credentials)
+
+async def require_admin_permission(credentials: str = Depends(api_key_header)):
+    """Require admin permission (same as API key verification for now)."""
+    return await verify_api_key(credentials)
