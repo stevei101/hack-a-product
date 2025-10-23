@@ -1,90 +1,127 @@
-"""Project model for the Product Mindset application."""
-
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, JSON
+from sqlalchemy.orm import relationship
 from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Optional, Any
 
-from sqlalchemy import DateTime, String, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from agentic_app.core.database import Base
-
-
-class ProjectStatus(str, Enum):
-    """Project status enumeration."""
-    ACTIVE = "active"
-    ARCHIVED = "archived"
-    COMPLETED = "completed"
+# Import Base from sync_database
+from agentic_app.core.sync_database import Base
 
 
 class Project(Base):
-    """Project model for organizing ideas, goals, features, and tasks."""
-
+    """Project model for storing user projects."""
     __tablename__ = "projects"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(200), index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    status: Mapped[ProjectStatus] = mapped_column(String(20), default=ProjectStatus.ACTIVE)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    status = Column(String(50), default="active")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Project metadata
-    tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
-    meta: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    
-    # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Project settings and configuration
+    ai_provider = Column(String(100), default="nvidia-nim")
+    settings = Column(JSON, default=dict)
     
     # Relationships
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="project")
-    ideas: Mapped[List["Idea"]] = relationship("Idea", back_populates="project")
-
-    def __repr__(self) -> str:
-        return f"<Project(id={self.id}, name='{self.name}', status='{self.status}')>"
+    chat_messages = relationship("ChatMessage", back_populates="project", cascade="all, delete-orphan")
+    workflows = relationship("Workflow", back_populates="project", cascade="all, delete-orphan")
+    ideas = relationship("Idea", back_populates="project", cascade="all, delete-orphan")
 
 
-class IdeaType(str, Enum):
-    """Idea type enumeration."""
-    IDEA = "idea"
-    GOAL = "goal"
-    FEATURE = "feature"
-    TASK = "task"
+class ChatMessage(Base):
+    """Chat message model for AI Companion conversations."""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    message_type = Column(String(20), nullable=False)  # 'user' or 'ai'
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    # AI-specific fields
+    ai_provider = Column(String(100), nullable=True)
+    model_version = Column(String(50), nullable=True)
+    tokens_used = Column(Integer, nullable=True)
+    
+    # Relationships
+    project = relationship("Project", back_populates="chat_messages")
 
 
-class IdeaStatus(str, Enum):
-    """Idea status enumeration."""
-    BRAINSTORM = "brainstorm"
-    PLANNING = "planning"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
+class Workflow(Base):
+    """Workflow model for storing AI workflows and executions."""
+    __tablename__ = "workflows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    workflow_type = Column(String(100), nullable=False)  # 'ideation', 'planning', 'design', 'execution'
+    status = Column(String(50), default="pending")  # 'pending', 'running', 'completed', 'failed'
+    
+    # Workflow configuration
+    ai_provider = Column(String(100), nullable=False)
+    tools_used = Column(JSON, default=list)
+    parameters = Column(JSON, default=dict)
+    
+    # Execution results
+    result = Column(Text, nullable=True)
+    execution_time = Column(Integer, nullable=True)  # in seconds
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    project = relationship("Project", back_populates="workflows")
 
 
 class Idea(Base):
-    """Idea model for the ideation canvas."""
-
+    """Idea model for storing project ideas and concepts."""
     __tablename__ = "ideas"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    title: Mapped[str] = mapped_column(String(200), index=True)
-    description: Mapped[str] = mapped_column(Text)
-    type: Mapped[IdeaType] = mapped_column(String(20), default=IdeaType.IDEA)
-    status: Mapped[IdeaStatus] = mapped_column(String(20), default=IdeaStatus.BRAINSTORM)
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=True)  # 'feature', 'improvement', 'bug', 'research'
+    priority = Column(String(20), default="medium")  # 'low', 'medium', 'high', 'critical'
+    status = Column(String(50), default="new")  # 'new', 'in_progress', 'completed', 'rejected'
     
-    # Project relationship
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    # AI-generated content
+    ai_generated = Column(Boolean, default=False)
+    ai_provider = Column(String(100), nullable=True)
+    confidence_score = Column(Integer, nullable=True)  # 0-100
     
-    # Idea metadata
-    priority: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    tags: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
-    meta: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    # Metadata
+    tags = Column(JSON, default=list)
+    attachments = Column(JSON, default=list)
     
-    # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="ideas")
+    project = relationship("Project", back_populates="ideas")
 
-    def __repr__(self) -> str:
-        return f"<Idea(id={self.id}, title='{self.title}', type='{self.type}', status='{self.status}')>"
+
+class UserSettings(Base):
+    """User settings and tool configuration model."""
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(255), nullable=False, index=True)  # Could be email or UUID
+    
+    # AI Provider configurations
+    default_ai_provider = Column(String(100), default="nvidia-nim")
+    ai_provider_configs = Column(JSON, default=dict)
+    
+    # MCP Tool configurations
+    mcp_tool_configs = Column(JSON, default=dict)
+    
+    # General settings
+    dark_mode = Column(Boolean, default=False)
+    auto_save = Column(Boolean, default=True)
+    notifications = Column(Boolean, default=True)
+    
+    # Other preferences
+    preferences = Column(JSON, default=dict)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

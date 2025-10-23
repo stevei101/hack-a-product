@@ -1,0 +1,16 @@
+# Development Environment Variables
+SECRET_KEY=dev-secret-key-for-testing-only
+API_KEY=dev-api-key-for-testing-only
+POSTGRES_PASSWORD=dev-password
+NIM_API_KEY=dev-nim-key
+LOG_LEVEL=INFO
+
+# Database (using SQLite for development)
+DATABASE_URL=sqlite:///./agentic_app.db
+
+# CORS settings
+BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173"]
+
+# Project settings
+PROJECT_NAME=Agentic Application
+API_V1_STR=/api/v1

@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from agentic_app.core.database import get_db
+from agentic_app.core.sync_database import get_sync_db
 from agentic_app.core.auth import require_admin_permission, get_current_api_key
 from agentic_app.schemas.api_key import (
     ApiKeyCreate, ApiKeyResponse, ApiKeyWithSecret, ApiKeyUpdate, 
@@ -20,7 +20,7 @@ router = APIRouter()
 @router.post("/", response_model=ApiKeyWithSecret, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     api_key_data: ApiKeyCreate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -59,7 +59,7 @@ async def list_api_keys(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     active_only: bool = Query(True, description="Return only active keys"),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -86,7 +86,7 @@ async def list_api_keys(
 @router.get("/{api_key_id}", response_model=ApiKeyResponse)
 async def get_api_key(
     api_key_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -111,7 +111,7 @@ async def get_api_key(
 async def update_api_key(
     api_key_id: int,
     update_data: ApiKeyUpdate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -135,7 +135,7 @@ async def update_api_key(
 @router.post("/{api_key_id}/revoke")
 async def revoke_api_key(
     api_key_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -159,7 +159,7 @@ async def revoke_api_key(
 @router.delete("/{api_key_id}")
 async def delete_api_key(
     api_key_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -182,7 +182,7 @@ async def delete_api_key(
 
 @router.get("/usage/stats", response_model=List[ApiKeyUsage])
 async def get_usage_stats(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_sync_db),
     current_api_key: str = Depends(require_admin_permission)
 ):
     """
@@ -202,7 +202,7 @@ async def get_usage_stats(
 @router.post("/validate")
 async def validate_api_key(
     api_key: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_sync_db)
 ):
     """
     Validate an API key (public endpoint for testing)

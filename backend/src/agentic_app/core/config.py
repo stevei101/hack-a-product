@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = "agentic_app"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: Optional[PostgresDsn] = None
+    DATABASE_URL: Optional[str] = None
 
     @field_validator("POSTGRES_PASSWORD", mode="before")
     @classmethod
@@ -64,17 +64,19 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
-    def assemble_db_connection(cls, v: Optional[str], info: ValidationInfo) -> Any:
+    def assemble_db_connection(cls, v: Optional[str], info: ValidationInfo) -> str:
         if isinstance(v, str):
             return v
 
         values = info.data
-
-        # Build connection string from environment variables or class defaults.
-        # Avoid importing `settings` here to prevent circular imports during
-        # Settings() initialization.
         import os
 
+        # Check if DATABASE_URL is explicitly set (for SQLite development)
+        explicit_db_url = os.getenv("DATABASE_URL")
+        if explicit_db_url:
+            return explicit_db_url
+
+        # Otherwise build PostgreSQL connection string
         user = os.getenv("POSTGRES_USER", values.get("POSTGRES_USER"))
         password = os.getenv("POSTGRES_PASSWORD", values.get("POSTGRES_PASSWORD"))
         host = os.getenv("POSTGRES_SERVER", values.get("POSTGRES_SERVER"))

@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from agentic_app.core.config import settings
 from agentic_app.core.logging import configure_logging
+from agentic_app.mcp.router import router as mcp_router
+from agentic_app.api.v1.api import api_router
 
 
 @asynccontextmanager
@@ -43,6 +45,12 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Include MCP router
+    app.include_router(mcp_router, prefix=settings.API_V1_STR)
+    
+    # Include API v1 router
+    app.include_router(api_router, prefix=settings.API_V1_STR)
 
     return app
 

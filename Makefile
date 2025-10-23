@@ -12,7 +12,21 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Frontend Development commands
-dev: ## Start frontend development server
+dev-setup: ## Install frontend dependencies
+	bun install
+
+kill-dev: ## Kill all development processes
+	@pkill -f "uvicorn agentic_app.main" 2>/dev/null || true
+	@pkill -f "uv run uvicorn" 2>/dev/null || true
+	@pkill -f "bun run dev" 2>/dev/null || true
+	@pkill -f "vite" 2>/dev/null || true
+	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8001 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8002 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@echo "✅ All development processes killed!"
+
+dev: dev-setup ## Start frontend development server
 	bun run dev
 
 build: ## Build the React application
@@ -26,22 +40,21 @@ test: ## Run tests (placeholder - add your test command here)
 
 # Backend Development commands
 backend-dev: ## Start backend development server
-	cd backend && source .venv/bin/activate && uvicorn agentic_app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && SECRET_KEY=dev-secret-key API_KEY=dev-api-key POSTGRES_PASSWORD=dev-password NIM_API_KEY=dev-nim-key LOG_LEVEL=INFO DATABASE_URL=sqlite+aiosqlite:///./agentic_app.db uv run uvicorn agentic_app.main:app --reload --host 0.0.0.0 --port 8003
 
 backend-setup: ## Set up backend environment with uv
-	@if [ ! -d "backend/.venv" ]; then \
-		cd backend && python3 -m venv .venv; \
-	fi
-	cd backend && source .venv/bin/activate && pip install uv
-	cd backend && source .venv/bin/activate && uv pip install -r requirements.txt
+	cd backend && uv sync
 
 backend-env: ## Create secure environment variables file
 	./setup_env.sh
 
 backend-test: ## Test backend endpoints
 	@echo "Testing backend endpoints..."
-	@curl -s http://localhost:8000/health | head -5
-	@curl -s http://localhost:8000/api/v1/nim/health | head -5
+	@curl -s http://localhost:8002/health | head -5
+	@curl -s http://localhost:8002/api/v1/mcp/tools | head -5
+
+backend-test-mcp: ## Test MCP server functionality
+	cd backend && uv run python ../../test_basic_mcp.py
 
 backend-logs: ## View backend logs
 	@echo "Backend logs (if running):"
