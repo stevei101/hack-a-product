@@ -15,12 +15,12 @@ variable "environment" {
   default     = "development"
 }
 
-variable "github_org" {
+variable "github_organization" {
   description = "The name of your GitHub organization."
   type        = string
 }
 
-variable "github_repo" {
+variable "github_repository" {
   description = "The name of your GitHub repository."
   type        = string
 }
@@ -46,11 +46,9 @@ variable "cluster_name" {
 variable "AWS_ACCESS_KEY_ID" {
   description = "AWS access key ID"
   type        = string
-  sensitive   = true
 }
 
 variable "AWS_SECRET_ACCESS_KEY" {
   description = "AWS secret access key"
   type        = string
-  sensitive   = true
 }

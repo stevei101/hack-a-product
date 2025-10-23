@@ -29,25 +29,33 @@ You have **3 options** to destroy your AWS infrastructure. Choose the one that w
 
 ---
 
-## ✅ **Option 2: Terraform Cloud UI (Easiest)**
+## ✅ **Option 2: Terraform Cloud UI (Easy)**
 
-**Pros:** Simplest, no command line needed  
-**Cons:** None!
+**Pros:** Visual interface, no command line needed  
+**Cons:** Need to navigate to find workspace
 
 ### Steps:
-1. Go to: https://app.terraform.io/app/disposable-org/workspaces/hack-a-product
+1. Go to: https://app.terraform.io/app
 
-2. Click **"Settings"** (in the left sidebar)
+2. Login and find your organization (likely "disposable-org")
 
-3. Scroll to **"Destruction and Deletion"** section
+3. Click on the organization
 
-4. Click **"Queue destroy plan"**
+4. Find workspace: **"hack-a-product"**
 
-5. Review the plan
+5. Click **"Settings"** (in the left sidebar)
 
-6. Click **"Confirm & Apply"**
+6. Scroll to **"Destruction and Deletion"** section
 
-7. Wait for the destroy to complete
+7. Click **"Queue destroy plan"**
+
+8. Review the plan
+
+9. Click **"Confirm & Apply"**
+
+10. Wait for the destroy to complete
+
+**Tip**: If you see "Not Found" error, the organization or workspace name might be different. Check your Terraform Cloud dashboard for the actual names.
 
 ---
 

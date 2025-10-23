@@ -1,35 +1,26 @@
 # Main Terraform configuration for The Product Mindset
 terraform {
-  required_version = ">= 1.1.0"
+  required_version = ">= 0.12.0"
 
-  cloud {
+  backend "remote" {
     organization = "disposable-org"
-
     workspaces {
       name = "hack-a-product"
     }
   }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
-  }
 }
 
-# Configure the AWS Provider
 provider "aws" {
-  region = var.aws_region
+  version = "~> 3.0"
+  region  = var.aws_region
 }
+
+# Configure the AWS Provider (already defined above)
 
 # S3 Bucket for Static Website Hosting
 resource "aws_s3_bucket" "site" {
-  bucket = var.bucket_name
+  bucket        = var.bucket_name
+  force_destroy = true
 
   tags = {
     Name        = "Static Site Bucket"

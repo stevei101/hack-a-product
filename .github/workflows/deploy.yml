@@ -94,7 +94,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -221,6 +221,8 @@ jobs:
           --create-namespace \
           --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND \
           --set image.tag=$IMAGE_TAG \
+          --set env.SECRET_KEY=${{ secrets.SECRET_KEY }} \
+          --set env.API_KEY=${{ secrets.API_KEY }} \
           --set env.NIM_API_KEY=${{ secrets.NIM_API_KEY }} \
           --set env.POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
 

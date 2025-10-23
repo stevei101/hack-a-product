@@ -215,3 +215,47 @@ __pycache__/
 
 # Logs
 logs/
+
+# Terraform - CRITICAL: Never commit state files or sensitive data
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.*
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform.tfstate
+terraform/.terraform.tfstate.*
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+terraform/.terraformrc
+terraform/terraform.rc
+terraform/backend.tf
+terraform/backend.tfvars
+terraform/*.tfvars
+terraform/*.tfvars.json
+terraform/.tfvars
+terraform/.tfvars.json
+terraform/secrets.tf
+terraform/secrets.tfvars
+terraform/secrets.tfvars.json
+terraform/.secrets.tfvars
+terraform/.secrets.tfvars.json
+
+# Terraform Cloud CLI
+.terraformrc
+terraform.rc
+
+# AWS credentials and sensitive files
+.aws/
+aws-credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Environment files with secrets
+.env.*
+!.env.example
