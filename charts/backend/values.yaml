@@ -68,18 +68,26 @@ affinity: {}
 
 # Environment variables
 env:
+  # Required for FastAPI
+  SECRET_KEY: "your-secret-key-change-in-production"
+  API_KEY: "your-api-key-change-in-production"
+  
+  # Database
   POSTGRES_SERVER: "postgres-service"
   POSTGRES_USER: "postgres"
   POSTGRES_PASSWORD: "changeme-secure-password"
   POSTGRES_DB: "agentic_app"
   POSTGRES_PORT: "5432"
   
+  # Redis
   REDIS_URL: "redis://redis-service:6379"
   
+  # NVIDIA NIM
   NIM_BASE_URL: "https://integrate.api.nvidia.com/v1"
   NIM_MODEL_NAME: "nvidia/llama-3_1-nemotron-nano-8b-v1"
   NIM_EMBEDDING_MODEL: "nvidia/nv-embedqa-e5-v5"
   
+  # Logging
   LOG_LEVEL: "INFO"
   LOG_FORMAT: "json"
 
